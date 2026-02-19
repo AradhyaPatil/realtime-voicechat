@@ -1,258 +1,153 @@
-Contribution: 2026-01-21 20:00
+# 🎙️ Voice Chat — Sarvam AI TTS Edition
 
-Contribution: 2026-01-21 20:01
+Real-time voice conversational chat powered by **Ollama** (local LLM) and **Sarvam AI** (cloud TTS). Speak naturally, get spoken responses in an Indian-English voice — with barge-in support, idle follow-ups, and streaming playback.
 
-Contribution: 2026-01-21 20:02
+## Architecture
 
-Contribution: 2026-01-21 20:03
+```
+Mic → faster-whisper (STT) → Ollama LLM (streaming) → Sarvam AI TTS (cloud) → Speaker
+```
 
-Contribution: 2026-01-22 20:00
+- **STT**: `faster-whisper` with the `base` model and beam-search decoding for accurate transcription.
+- **LLM**: Ollama running `gemma2:2b` locally — streams tokens in real-time.
+- **TTS**: Sarvam AI's **Bulbul v3** model via cloud API — natural Indian-English voice.
+- **Playback**: `sounddevice` plays synthesized audio with real-time barge-in detection (mic monitoring stops AI speech when you start talking).
 
-Contribution: 2026-01-22 20:01
+## Features
 
-Contribution: 2026-01-22 20:02
+- 🗣️ **Natural conversation** — speak freely, AI responds with voice
+- ⚡ **Streaming LLM** — tokens stream to TTS as they arrive
+- ✋ **Barge-in** — start talking mid-response and the AI stops immediately
+- ⏳ **Idle follow-ups** — AI proactively re-engages if you go silent
+- 🔇 **Hallucination filter** — filters common Whisper artifacts ("thank you", "thanks for watching", etc.)
+- ⌨️ **Text fallback** — press `Ctrl+C` to type instead of speak
+- 🎛️ **Auto mic calibration** — adapts to ambient noise on startup
 
-Contribution: 2026-01-22 20:03
+---
 
-Contribution: 2026-01-22 20:04
+## Requirements
 
-Contribution: 2026-01-22 20:05
+### Python
 
-Contribution: 2026-01-22 20:06
+- **Python 3.10+** (uses `X | Y` union type syntax)
 
-Contribution: 2026-01-22 20:07
+### System Dependencies
 
-Contribution: 2026-01-22 20:08
+| Dependency | Purpose | Install |
+|---|---|---|
+| **Ollama** | Local LLM inference | [ollama.com](https://ollama.com/) |
+| **gemma2:2b** model | Default chat model | `ollama pull gemma2:2b` |
+| **PortAudio** | Audio I/O (required by sounddevice) | Bundled on Windows; `brew install portaudio` on macOS; `sudo apt install portaudio19-dev` on Linux |
+| **Sarvam AI API Key** | Cloud TTS | Sign up at [dashboard.sarvam.ai](https://dashboard.sarvam.ai/) |
 
-Contribution: 2026-01-23 20:00
+### Python Packages
 
-Contribution: 2026-01-23 20:01
+```
+faster-whisper
+sounddevice
+numpy
+ollama
+requests
+python-dotenv
+```
 
-Contribution: 2026-01-23 20:02
+Install all at once:
 
-Contribution: 2026-01-23 20:03
+```bash
+pip install faster-whisper sounddevice numpy ollama requests python-dotenv
+```
 
-Contribution: 2026-01-23 20:04
+---
 
-Contribution: 2026-01-23 20:05
+## Setup
 
-Contribution: 2026-01-23 20:06
+### 1. Clone & install dependencies
 
-Contribution: 2026-01-25 20:00
+```bash
+cd voice-chat
+pip install faster-whisper sounddevice numpy ollama requests python-dotenv
+```
 
-Contribution: 2026-01-25 20:01
+### 2. Pull the Ollama model
 
-Contribution: 2026-01-25 20:02
+Make sure Ollama is running, then:
 
-Contribution: 2026-01-25 20:03
+```bash
+ollama pull gemma2:2b
+```
 
-Contribution: 2026-01-25 20:04
+### 3. Set your Sarvam AI API key
 
-Contribution: 2026-01-25 20:05
+Create a `.env` file in the project root:
 
-Contribution: 2026-01-25 20:06
+```env
+SARVAM_API_KEY=your_api_key_here
+```
 
-Contribution: 2026-01-25 20:07
+Or set it as an environment variable:
 
-Contribution: 2026-01-25 20:08
+```bash
+# Windows (cmd)
+set SARVAM_API_KEY=your_api_key_here
 
-Contribution: 2026-01-25 20:09
+# Windows (PowerShell)
+$env:SARVAM_API_KEY="your_api_key_here"
 
-Contribution: 2026-01-26 20:00
+# Linux / macOS
+export SARVAM_API_KEY=your_api_key_here
+```
 
-Contribution: 2026-01-26 20:01
+### 4. Run
 
-Contribution: 2026-01-27 20:00
+```bash
+python voice_chat_sarvam.py
+```
 
-Contribution: 2026-01-27 20:01
+---
 
-Contribution: 2026-01-27 20:02
+## Usage
 
-Contribution: 2026-01-27 20:03
+| Action | How |
+|---|---|
+| **Talk** | Just speak — the mic auto-detects speech |
+| **Interrupt AI** | Start talking while AI is speaking |
+| **Type instead** | Press `Ctrl+C` then type your message |
+| **Quit** | Press `Ctrl+C` twice, or type `quit` / `exit` / `q` |
 
-Contribution: 2026-01-27 20:04
+---
 
-Contribution: 2026-01-27 20:05
+## Configuration
 
-Contribution: 2026-01-28 20:00
+All configuration constants are at the top of `voice_chat_sarvam.py`:
 
-Contribution: 2026-01-28 20:01
+| Variable | Default | Description |
+|---|---|---|
+| `WHISPER_MODEL` | `"base"` | Whisper model size (`tiny`, `base`, `small`, `medium`, `large`) |
+| `OLLAMA_MODEL` | `"gemma2:2b"` | Ollama model to use for chat |
+| `SARVAM_MODEL` | `"bulbul:v3"` | Sarvam TTS model |
+| `SARVAM_SPEAKER` | `"shubh"` | Voice speaker name |
+| `SARVAM_LANGUAGE` | `"en-IN"` | TTS language code |
+| `SARVAM_PACE` | `0.9` | Speech speed (0.3–3.0) |
+| `SARVAM_SAMPLE_RATE` | `22050` | Audio sample rate (8000, 16000, 22050, 24000) |
+| `SILENCE_DURATION` | `0.4` | Seconds of silence to end a turn |
+| `IDLE_TIMEOUT` | `8.0` | Seconds before AI follows up on silence |
+| `MAX_IDLE_FOLLOWUPS` | `3` | Max consecutive idle follow-ups |
 
-Contribution: 2026-01-28 20:02
+---
 
-Contribution: 2026-01-28 20:03
+## Troubleshooting
 
-Contribution: 2026-01-30 20:00
+| Issue | Fix |
+|---|---|
+| `SARVAM_API_KEY not set!` | Set the key via `.env` or environment variable (see Setup step 3) |
+| Sarvam warmup failed | Verify your API key is valid at [dashboard.sarvam.ai](https://dashboard.sarvam.ai/) |
+| Ollama model not found | Run `ollama pull gemma2:2b` |
+| Mic near-zero warning | Check your microphone is connected and set as default input device |
+| `PortAudio` errors | Install PortAudio — see System Dependencies table above |
+| CUDA / GPU errors | The script auto-falls back to CPU if GPU fails |
 
-Contribution: 2026-01-30 20:01
+---
 
-Contribution: 2026-01-31 20:00
+## License
 
-Contribution: 2026-01-31 20:01
-
-Contribution: 2026-01-31 20:02
-
-Contribution: 2026-01-31 20:03
-
-Contribution: 2026-01-31 20:04
-
-Contribution: 2026-02-01 20:00
-
-Contribution: 2026-02-01 20:01
-
-Contribution: 2026-02-02 20:00
-
-Contribution: 2026-02-02 20:01
-
-Contribution: 2026-02-02 20:02
-
-Contribution: 2026-02-02 20:03
-
-Contribution: 2026-02-03 20:00
-
-Contribution: 2026-02-03 20:01
-
-Contribution: 2026-02-03 20:02
-
-Contribution: 2026-02-03 20:03
-
-Contribution: 2026-02-03 20:04
-
-Contribution: 2026-02-03 20:05
-
-Contribution: 2026-02-03 20:06
-
-Contribution: 2026-02-03 20:07
-
-Contribution: 2026-02-04 20:00
-
-Contribution: 2026-02-04 20:01
-
-Contribution: 2026-02-05 20:00
-
-Contribution: 2026-02-05 20:01
-
-Contribution: 2026-02-05 20:02
-
-Contribution: 2026-02-05 20:03
-
-Contribution: 2026-02-05 20:04
-
-Contribution: 2026-02-05 20:05
-
-Contribution: 2026-02-05 20:06
-
-Contribution: 2026-02-05 20:07
-
-Contribution: 2026-02-05 20:08
-
-Contribution: 2026-02-06 20:00
-
-Contribution: 2026-02-06 20:01
-
-Contribution: 2026-02-06 20:02
-
-Contribution: 2026-02-06 20:03
-
-Contribution: 2026-02-06 20:04
-
-Contribution: 2026-02-06 20:05
-
-Contribution: 2026-02-07 20:00
-
-Contribution: 2026-02-07 20:01
-
-Contribution: 2026-02-08 20:00
-
-Contribution: 2026-02-08 20:01
-
-Contribution: 2026-02-08 20:02
-
-Contribution: 2026-02-08 20:03
-
-Contribution: 2026-02-08 20:04
-
-Contribution: 2026-02-10 20:00
-
-Contribution: 2026-02-10 20:01
-
-Contribution: 2026-02-10 20:02
-
-Contribution: 2026-02-10 20:03
-
-Contribution: 2026-02-10 20:04
-
-Contribution: 2026-02-10 20:05
-
-Contribution: 2026-02-10 20:06
-
-Contribution: 2026-02-10 20:07
-
-Contribution: 2026-02-11 20:00
-
-Contribution: 2026-02-11 20:01
-
-Contribution: 2026-02-11 20:02
-
-Contribution: 2026-02-11 20:03
-
-Contribution: 2026-02-11 20:04
-
-Contribution: 2026-02-11 20:05
-
-Contribution: 2026-02-13 20:00
-
-Contribution: 2026-02-13 20:01
-
-Contribution: 2026-02-13 20:02
-
-Contribution: 2026-02-13 20:03
-
-Contribution: 2026-02-13 20:04
-
-Contribution: 2026-02-13 20:05
-
-Contribution: 2026-02-13 20:06
-
-Contribution: 2026-02-13 20:07
-
-Contribution: 2026-02-13 20:08
-
-Contribution: 2026-02-14 20:00
-
-Contribution: 2026-02-14 20:01
-
-Contribution: 2026-02-14 20:02
-
-Contribution: 2026-02-14 20:03
-
-Contribution: 2026-02-14 20:04
-
-Contribution: 2026-02-14 20:05
-
-Contribution: 2026-02-16 20:00
-
-Contribution: 2026-02-16 20:01
-
-Contribution: 2026-02-16 20:02
-
-Contribution: 2026-02-16 20:03
-
-Contribution: 2026-02-16 20:04
-
-Contribution: 2026-02-16 20:05
-
-Contribution: 2026-02-17 20:00
-
-Contribution: 2026-02-17 20:01
-
-Contribution: 2026-02-17 20:02
-
-Contribution: 2026-02-17 20:03
-
-Contribution: 2026-02-17 20:04
-
-Contribution: 2026-02-17 20:05
-
-Contribution: 2026-02-17 20:06
-
+Private project — not licensed for redistribution.
